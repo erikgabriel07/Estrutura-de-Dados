@@ -38,7 +38,7 @@ typedef void (*DocPrintFunc)(DocValor v1, DocValor v2);
  *
  * @param nome			Nome do documento.
  * @param paginas		Quantidade de páginas do documento.
- * @return				Retorna um ponteiro de documento.
+ * @return			Retorna um ponteiro de documento.
  */
 Documento *criar_documento(const char *nome, unsigned int paginas);
 
