@@ -4,81 +4,74 @@
 #include "paciente.h"
 #include "fila.h"
 
-void listar_fila(FilaVacina **fila) {
-	PacienteVacina *p = (*fila)->begin;
+void liberar(FilaVacina **fila) {
+	if (!(*fila)) return;
 	
-	printf("====== EXIBINDO PACIENTES ======\n");
-	while (p != NULL) {
-		exibir_dados_paciente(&p);
+	PacienteVacina *temp, *delete = (*fila)->begin;
+	
+	while (delete) {
+		temp = delete->next;
+		free(delete);
+		delete = temp;
+	}
+	
+	delete = temp = NULL;
+	
+	free(*fila);
+	*fila = NULL;
+}
+
+void listar_fila(FilaVacina *fila) {
+	if (!fila) return;
+	
+	PacienteVacina *p = fila->begin;
+	
+	printf("\n=========== LISTAGEM ===========\n");
+	while (p) {
+		exibir_dados_paciente(p);
 		p = p->next;
 	}
 }
 
-void chamar_paciente(FilaVacina **fila) {
-	PacienteVacina *remover = (*fila)->begin;
+void inserir_paciente_vacina(PacienteVacina *novo, FilaVacina **fila) {
+	if (!novo) return;
 	
-	printf("Chamando paciente: %s\n", remover->nome);
-	
-	(*fila)->begin = remover->next;
-	
-	free(remover);
-	remover = NULL;
-}
+	if (!(*fila)) {
+		*fila = (FilaVacina *)malloc(sizeof(FilaVacina));	
+		(*fila)->begin = NULL;
+	}
 
-PacienteVacina *buscar_paciente_anterior(PacienteVacina **atual, FilaVacina **fila) {
-	PacienteVacina *anterior, *p;
-	p = (*fila)->begin;
+	PacienteVacina *p = (*fila)->begin, *q = NULL;
 	
-	while (p != NULL) {
-		if (p == *atual) {
-			return anterior;
-		}
-		anterior = p;
+	while (p) {
+		if ((novo->risco > p->risco) || 
+			(novo->risco == p->risco && novo->idade > p->idade)) break;
+			
+		q = p;
 		p = p->next;
 	}
+	
+	if (!q) {
+		novo->next = p;
+		(*fila)->begin = novo;
+	} else {
+		novo->next = q->next;
+		q->next = novo;
+	}
 }
 
-void inserir_paciente_vacina(PacienteVacina **novo, FilaVacina **fila) {
-	/*
-	if (*fila == NULL) {
-		*fila = (FilaVacina *) malloc(sizeof(FilaVacina));
-		(*fila)->begin = *novo;
-		return;
-	}
+void chamar_paciente(FilaVacina *fila) {
+	if (!fila || !fila->begin) return;
 	
-	PacienteVacina *atual = (*fila)->begin;
+	PacienteVacina *delete = fila->begin;
 	
-	if ((*novo)->idade > atual->idade || ((*novo)->idade <= atual->idade && (*novo)->risco > atual->risco)) {
-		(*fila)->begin = *novo;
-		(*novo)->next = atual;
-		return;
-	}
+	printf("\n====== Deletando paciente ======\n");
+	exibir_dados_paciente(delete);
 	
-	while (atual != NULL) {
-		if ((*novo)->idade > atual->idade || ((*novo)->idade <= atual->idade && (*novo)->risco > atual->risco)) {
-			(*novo)->next = atual;
-			buscar_paciente_anterior(&atual, fila)->next = *novo;
-			return;
-			break;
-		} else if ((*novo)->risco == atual->risco && atual->next == NULL) {
-			(*novo)->next = atual->next;
-			atual->next = *novo;
-			return;
-			break;
-		} else if ((
-		*novo)->risco < atual->risco) {
-			(*novo)->next = atual->next;
-			atual->next = *novo;
-			return;
-			break;
-		} else {
-			printf("ALGO ESTA ERRADO...");
-		}
-		atual = atual->next;
-	}
-	*/
+	fila->begin = delete->next;
 	
-	return;
+	free(delete);
+	delete = NULL;
 }
 
 void carregar_pacientes_arquivo(const char *filename, FilaVacina **fila) {
@@ -105,13 +98,15 @@ void carregar_pacientes_arquivo(const char *filename, FilaVacina **fila) {
 		
 		paciente->next = NULL;
 		
-		inserir_paciente_vacina(&paciente, fila);
+		inserir_paciente_vacina(paciente, fila);
 	}
 	
 	fclose(fptr);
 }
 
 void salvar_pacientes_arquivo(const char *filename, FilaVacina **fila) {
+	if (!(*fila)) return;
+	
 	FILE *fptr;
 	
 	fptr = fopen(filename, "w");
